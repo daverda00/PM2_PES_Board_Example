@@ -2,7 +2,7 @@
 
 #include "PM2_Drivers.h"
 
-# define M_PI 3.14159265358979323846 // number pi, an example in case you need it
+#define M_PI 3.14159265358979323846 // number pi, an example in case you need it
 
 
 bool do_execute_main_task = false; // this variable will be toggled via the user button (blue button) and decides whether to execute the main task or not
@@ -30,16 +30,14 @@ int main()
     // additional led
     DigitalOut additional_led(PB_9); // create DigitalOut object to command extra led (you need to add an aditional resistor, e.g. 220...500 Ohm)
 
-
     // mechanical button
     DigitalIn mechanical_button(PC_5); // create DigitalIn object to evaluate extra mechanical button, you need to specify the mode for proper usage, see below
     mechanical_button.mode(PullUp);    // set pullup mode: sets pullup between pin and 3.3 V, so that there is a defined potential
 
-
     // Sharp GP2Y0A41SK0F, 4-40 cm IR Sensor
     float ir_distance_mV = 0.0f; // define variable to store measurement
-    //??? // create AnalogIn object to read in infrared distance sensor, 0...3.3V are mapped to 0...1
-
+    // create AnalogIn object to read in infrared distance sensor, 0...3.3V are mapped to 0...1
+    AnalogIn ir_analog_in(PC_2);
 
     main_task_timer.start();
     
@@ -49,24 +47,22 @@ int main()
         main_task_timer.reset();
 
         if (do_execute_main_task) {
-
             if (mechanical_button.read()) {
 
-                // read analog input
-                //ir_distance_mV = ???;
+                                
+                ir_distance_mV = 1.0e3f * ir_analog_in.read() * 3.3f;
+                //printf("Test IR sensor (mV): %3.3f\r\n", ir_distance_mV);
+                printf("\e[1;1H\e[2J"); //clear console
+                printf("*****************************\n\nIR sensor in cm: %3.3f\r\n\n", 1.184e04/(ir_distance_mV-21.67));
 
             }
-
-            // visual feedback that the main task is executed, setting this once would actually be enough
             additional_led = 1;
-
-        } else {
-
+            // visual feedback that the main task is executed, setting this once would actually be enough     
+        }
+        else {
             if (do_reset_all_once) {
                 do_reset_all_once = false;
-
                 ir_distance_mV = 0.0f;
-
                 additional_led = 0;
             }            
         }
@@ -75,8 +71,6 @@ int main()
         user_led = !user_led;
 
         // do only output via serial what's really necessary, this makes your code slow
-        printf("IR sensor (mV): %3.3f\r\n", ir_distance_mV);
-
         // read timer and make the main thread sleep for the remaining time span (non blocking)
         int main_task_elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(main_task_timer.elapsed_time()).count();
         thread_sleep_for(main_task_period_ms - main_task_elapsed_time_ms);
