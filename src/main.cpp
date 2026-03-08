@@ -1,5 +1,9 @@
 #include "mbed.h"
 
+/*
+    Test if git is committing properly
+*/
+
 // pes board pin map
 #include "PESBoardPinMap.h"
 
